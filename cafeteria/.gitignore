@@ -1,0 +1,18 @@
+# Archivos de entorno y credenciales (¡MUY IMPORTANTE!)
+.env
+.env.local
+.env.*.local
+
+# Carpeta de librerías y dependencias (Pesa mucho y se instala con npm install)
+node_modules/
+
+# Archivos de registros y logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archivos del sistema operativo y editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
