@@ -9,6 +9,13 @@ const PORT = process.env.PORT || 3000;
 app.use(express.json());
 app.use(cors()); // Permite llamadas desde el Frontend en Vercel
 
+// Verificar variables de entorno al arrancar el servidor
+console.log('--- Comprobando variables de entorno ---');
+console.log('DB_HOST:', process.env.DB_HOST ? 'Configurado' : 'FALTANTE');
+console.log('DB_USER:', process.env.DB_USER ? 'Configurado' : 'FALTANTE');
+console.log('DB_NAME:', process.env.DB_NAME ? 'Configurado' : 'FALTANTE');
+console.log('DB_PORT:', process.env.DB_PORT || 3306);
+
 // Pool de conexión con soporte SSL para Aiven
 const conexion = mysql.createPool({
   host: process.env.DB_HOST,
@@ -32,18 +39,34 @@ app.get('/ventas', (req, res) => {
     INNER JOIN productos p ON v.producto_id = p.id
   `;
   conexion.query(sql, (err, resultados) => {
-    if (err) return res.status(500).send(err);
+    if (err) {
+      console.error('❌ Error SQL en GET /ventas:', err.message);
+      return res.status(500).json({ error: err.message, code: err.code });
+    }
     res.json(resultados);
   });
 });
 
-// GET /estudiantes y GET /productos
+// GET /estudiantes
 app.get('/estudiantes', (req, res) => {
-  conexion.query('SELECT * FROM estudiantes', (err, r) => err ? res.status(500).send(err) : res.json(r));
+  conexion.query('SELECT * FROM estudiantes', (err, r) => {
+    if (err) {
+      console.error('❌ Error SQL en GET /estudiantes:', err.message);
+      return res.status(500).json({ error: err.message, code: err.code });
+    }
+    res.json(r);
+  });
 });
 
+// GET /productos
 app.get('/productos', (req, res) => {
-  conexion.query('SELECT * FROM productos', (err, r) => err ? res.status(500).send(err) : res.json(r));
+  conexion.query('SELECT * FROM productos', (err, r) => {
+    if (err) {
+      console.error('❌ Error SQL en GET /productos:', err.message);
+      return res.status(500).json({ error: err.message, code: err.code });
+    }
+    res.json(r);
+  });
 });
 
 // POST /ventas
@@ -52,7 +75,13 @@ app.post('/ventas', (req, res) => {
   conexion.query(
     'INSERT INTO ventas (estudiante_id, producto_id, cantidad, fecha) VALUES (?, ?, ?, ?)',
     [estudiante_id, producto_id, cantidad, fecha],
-    (err) => err ? res.status(500).send(err) : res.send({ message: 'Venta registrada correctamente' })
+    (err) => {
+      if (err) {
+        console.error('❌ Error SQL en POST /ventas:', err.message);
+        return res.status(500).json({ error: err.message, code: err.code });
+      }
+      res.send({ message: 'Venta registrada correctamente' });
+    }
   );
 });
 
@@ -63,16 +92,26 @@ app.put('/ventas/:id', (req, res) => {
   conexion.query(
     'UPDATE ventas SET estudiante_id=?, producto_id=?, cantidad=?, fecha=? WHERE id=?',
     [estudiante_id, producto_id, cantidad, fecha, id],
-    (err) => err ? res.status(500).send(err) : res.send({ message: `Venta con ID ${id} actualizada` })
+    (err) => {
+      if (err) {
+        console.error('❌ Error SQL en PUT /ventas:', err.message);
+        return res.status(500).json({ error: err.message, code: err.code });
+      }
+      res.send({ message: `Venta con ID ${id} actualizada` });
+    }
   );
 });
 
 // DELETE /ventas/:id
 app.delete('/ventas/:id', (req, res) => {
   const id = req.params.id;
-  conexion.query('DELETE FROM ventas WHERE id=?', [id], (err) =>
-    err ? res.status(500).send(err) : res.send({ message: `Venta con ID ${id} eliminada` })
-  );
+  conexion.query('DELETE FROM ventas WHERE id=?', [id], (err) => {
+    if (err) {
+      console.error('❌ Error SQL en DELETE /ventas:', err.message);
+      return res.status(500).json({ error: err.message, code: err.code });
+    }
+    res.send({ message: `Venta con ID ${id} eliminada` });
+  });
 });
 
 app.listen(PORT, () => {
